@@ -22,7 +22,7 @@ export default defineConfig(({ mode }) => {
       port: 3000,
       proxy: {
         '/api': {
-          target: `http://127.0.0.1:${env.BACKEND_PORT || 5001}`,
+          target: `http://127.0.0.1:${env.BACKEND_PORT || 5006}`,
           changeOrigin: true,
           secure: false,
         }

@@ -8,6 +8,9 @@ import authRoutes from "./server/routes/auth.js";
 import platformRoutes from "./server/routes/platforms.js";
 import learningRoutes from "./server/routes/learning.js";
 import statsRoutes from "./server/routes/stats.js";
+import reportRoutes from "./server/routes/reports.js";
+import competitionRoutes from "./server/routes/competitions.js";
+import aiRoutes from "./server/routes/ai.js";
 
 dotenv.config();
 
@@ -16,7 +19,7 @@ const __dirname = path.dirname(__filename);
 
 async function startServer() {
   const app = express();
-  const PORT = process.env.PORT || 5001;
+  const PORT = process.env.PORT || 5006;
 
   app.use((req, res, next) => {
     console.log(`[SERVER] ${req.method} ${req.url} - Host: ${req.headers.host}`);
@@ -39,6 +42,9 @@ async function startServer() {
   apiRouter.use("/learning-resources", learningRoutes);
   apiRouter.use("/stats", statsRoutes);
   apiRouter.use("/github", statsRoutes);
+  apiRouter.use("/reports", reportRoutes);
+  apiRouter.use("/competitions", competitionRoutes);
+  apiRouter.use("/ai", aiRoutes);
 
   app.use("/api", apiRouter);
 

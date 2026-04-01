@@ -9,7 +9,8 @@ const SUPPORTED_LEARNING_PLATFORMS = [
   { id: "udemy", name: "Udemy" },
   { id: "coursera", name: "Coursera" },
   { id: "fcc", name: "freeCodeCamp" },
-  { id: "codecademy", name: "Codecademy" }
+  { id: "codecademy", name: "Codecademy" },
+  { id: "unstop", name: "Unstop" }
 ];
 
 router.get("/", authenticateToken, (req, res) => {
@@ -100,18 +101,39 @@ router.get("/:platformId", authenticateToken, (req, res) => {
   const { platformId } = req.params;
   const provider = platformId.charAt(0).toUpperCase() + platformId.slice(1).toLowerCase();
 
-  try {
-    const resource = db.prepare("SELECT connected FROM user_learning_resources WHERE user_id = ? AND platform_id = ?").get(req.user.id, platformId);
-    const courses = db.prepare("SELECT * FROM learning_courses WHERE user_id = ? AND provider = ? ORDER BY completion_date DESC").all(req.user.id, provider);
+    try {
+      const resource = db.prepare("SELECT stats, connected FROM user_learning_resources WHERE user_id = ? AND platform_id = ?").get(req.user.id, platformId);
+      const dbCourses = db.prepare("SELECT * FROM learning_courses WHERE user_id = ? AND provider = ? ORDER BY completion_date DESC").all(req.user.id, provider);
 
-    res.json({
-      connected: !!resource?.connected,
-      courses: courses.map((c) => ({
-        ...c,
-        tags: JSON.parse(c.tags || '[]')
-      }))
-    });
-  } catch (error) {
+      let virtualCourses = [];
+      if (resource?.stats) {
+          try {
+              const stats = JSON.parse(resource.stats);
+              if (stats.certificates && Array.isArray(stats.certificates)) {
+                  virtualCourses = stats.certificates.map(cert => ({
+                      id: `v-${platformId}-${cert.title}`,
+                      title: cert.title,
+                      instructor: cert.issuedBy || provider,
+                      hours: 0,
+                      completion_date: cert.issuedOn,
+                      certificate_url: cert.certificateUrl,
+                      provider: provider,
+                      isVirtual: true
+                  }));
+              }
+          } catch {}
+      }
+
+      const allCourses = [...dbCourses, ...virtualCourses];
+
+      res.json({
+        connected: !!resource?.connected,
+        courses: allCourses.map((c) => ({
+          ...c,
+          tags: JSON.parse(c.tags || '[]')
+        }))
+      });
+    } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });

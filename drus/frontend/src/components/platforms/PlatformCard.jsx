@@ -5,13 +5,16 @@ import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 import {
   RefreshCw,
-  AlertCircle,
   ExternalLink,
   Trophy,
   Clock,
   ChevronRight,
-  ShieldCheck
+  ShieldCheck,
+  Zap,
+  Globe,
+  LayoutGrid
 } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 import { cn } from "../../utils";
 import { HackerRankBadge } from "./HackerRankBadge";
 
@@ -21,7 +24,8 @@ const OFFICIAL_URLS = {
   hackerrank: "https://www.hackerrank.com",
   github: "https://github.com",
   codechef: "https://www.codechef.com",
-  atcoder: "https://atcoder.jp"
+  atcoder: "https://atcoder.jp",
+  unstop: "https://unstop.com"
 };
 
 export const PlatformCard = ({ platform }) => {
@@ -31,64 +35,28 @@ export const PlatformCard = ({ platform }) => {
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState(null);
 
-  const getPlatformColor = () => {
-    switch (platform.id) {
-      case "leetcode": return "text-accent-amber bg-accent-amber/10 border-accent-amber/20";
-      case "codeforces": return "text-accent-blue bg-accent-blue/10 border-accent-blue/20";
-      case "hackerrank": return "text-accent-emerald bg-accent-emerald/10 border-accent-emerald/20";
-      case "github": return "text-accent-purple bg-accent-purple/10 border-accent-purple/20";
-      case "codechef": return "text-accent-amber bg-accent-amber/10 border-accent-amber/20";
-      case "atcoder": return "text-accent-rose bg-accent-rose/10 border-accent-rose/20";
-      default: return "text-accent-emerald bg-accent-emerald/10 border-accent-emerald/20";
+  const getPlatformStyle = () => {
+    switch (platform.id?.toLowerCase()) {
+      case "leetcode": return { color: "from-[#FFA116] to-[#FFD66B]" };
+      case "codeforces": return { color: "from-[#1F8ACB] to-[#3B82F6]" };
+      case "hackerrank": return { color: "from-[#2EC866] to-[#10B981]" };
+      case "github": return { color: "from-[#2D333B] to-[#444D56]" };
+      default: return { color: "from-emerald-500 to-teal-600" };
     }
   };
 
-  const colorClasses = getPlatformColor();
+  const style = getPlatformStyle();
 
   const handleSave = async () => {
     let cleanUsername = username.trim();
-
     if (!cleanUsername) {
       const officialUrl = OFFICIAL_URLS[platform.id];
-      if (officialUrl) {
-        window.open(officialUrl, '_blank');
-      }
+      if (officialUrl) window.open(officialUrl, '_blank');
       return;
     }
-
     setLoading(true);
-    setError(null);
     try {
-      if (platform.id === "hackerrank" && cleanUsername.includes("hackerrank.com/")) {
-        try {
-          const urlObj = new URL(cleanUsername.startsWith('http') ? cleanUsername : `https://${cleanUsername}`);
-          const pathParts = urlObj.pathname.split('/').filter(p => p);
-          if (pathParts[0] === 'profile' && pathParts[1]) {
-            cleanUsername = pathParts[1];
-          } else if (pathParts[0]) {
-            cleanUsername = pathParts[0];
-          }
-        } catch { /* fallback */ }
-      }
-
-      const getProfileUrl = (id, username) => {
-        switch (id) {
-          case 'leetcode': return `https://leetcode.com/${username}`;
-          case 'codeforces': return `https://codeforces.com/profile/${username}`;
-          case 'hackerrank': return `https://www.hackerrank.com/profile/${username}`;
-          case 'github': return `https://github.com/${username}`;
-          case 'codechef': return `https://www.codechef.com/users/${username}`;
-          case 'atcoder': return `https://atcoder.jp/users/${username}`;
-          default: return "";
-        }
-      };
-
-      await updatePlatform(platform.id, {
-        username: cleanUsername,
-        profileUrl: cleanUsername ? getProfileUrl(platform.id, cleanUsername) : "",
-        connected: !!cleanUsername
-      });
-      setUsername(cleanUsername);
+      await updatePlatform(platform.id, { username: cleanUsername, connected: !!cleanUsername });
       if (cleanUsername) handleSync();
     } catch (err) {
       setError(err.message);
@@ -99,189 +67,118 @@ export const PlatformCard = ({ platform }) => {
 
   const handleSync = async () => {
     setSyncing(true);
-    setError(null);
     try {
       await syncPlatform(platform.id);
     } catch (err) {
-      if (err.status === 404) {
-        setError("User not found. Check spelling/URL.");
-      } else if (err.status === 403) {
-        setError("Access denied. Platform is blocking requests.");
-      } else {
-        setError("Sync failed. Try again later.");
-      }
+      setError("Sync failed");
     } finally {
       setSyncing(false);
     }
   };
 
-  const isHackerRank = platform.id === "hackerrank";
-
   return (
-    <Card className="h-full flex flex-col group overflow-hidden">
-      <CardContent className="flex-1 flex flex-col p-8 space-y-8">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-5">
-            <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center border-2 text-2xl font-black shadow-lg transition-transform group-hover:scale-110", colorClasses)}>
-              {platform.name[0]}
-            </div>
-            <div>
-              <h3 className="text-text-primary text-xl font-black tracking-tight">{platform.name}</h3>
-              <div className="flex flex-wrap items-center gap-2 mt-1">
+    <motion.div whileHover={{ y: -4 }} className="h-full">
+      <Card className="h-full flex flex-col group border-border-subtle bg-bg-card/40 backdrop-blur-md rounded-[2rem] overflow-hidden hover:border-emerald-500/20 transition-all">
+        <CardContent className="p-6 flex flex-col h-full space-y-6">
+          {/* Compact Header */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center p-0.5 bg-gradient-to-br shadow-lg", style.color)}>
+                 <div className="w-full h-full bg-bg-card rounded-[0.9rem] flex items-center justify-center">
+                    <span className={cn("text-xl font-black bg-clip-text text-transparent bg-gradient-to-br", style.color)}>
+                      {platform.name ? platform.name[0] : platform.id ? platform.id[0] : '?'}
+                    </span>
+                 </div>
+              </div>
+              <div>
+                <h3 className="text-text-primary text-xl font-black tracking-tighter leading-none">{platform.name}</h3>
                 {platform.connected ? (
-                  <>
-                    <span className="flex items-center gap-1.5 text-[10px] font-black text-emerald-500 uppercase tracking-widest">
-                      <ShieldCheck className="w-3.5 h-3.5" /> Verified
-                    </span>
-                    <span className="flex items-center gap-1.5 text-[10px] font-black text-blue-500 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20 uppercase tracking-widest">
-                      Live Data
-                    </span>
-                  </>
-                ) : (
-                  <span className="flex items-center gap-1.5 text-[10px] font-black text-text-secondary uppercase tracking-widest">
-                    <AlertCircle className="w-3.5 h-3.5" /> Unlinked
+                  <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest flex items-center gap-1 mt-1">
+                    <ShieldCheck className="w-3 h-3" /> Linked
                   </span>
-                )}
-                {error && (
-                  <span className="flex items-center gap-1.5 text-[10px] font-black text-rose-500 bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/20 uppercase tracking-widest">
-                    Error
+                ) : (
+                  <span className="text-[9px] font-black text-text-secondary uppercase tracking-widest flex items-center gap-1 mt-1 opacity-50">
+                    <Globe className="w-3 h-3" /> Unlinked
                   </span>
                 )}
               </div>
             </div>
+            {platform.connected && (
+              <button onClick={handleSync} className="p-2.5 bg-emerald-500/5 text-emerald-500 rounded-xl hover:bg-emerald-500/10 transition-all">
+                <RefreshCw className={cn("w-4 h-4", syncing && "animate-spin")} />
+              </button>
+            )}
           </div>
 
-          {platform.connected && platform.profileUrl && (
-            <a
-              href={platform.profileUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-2.5 rounded-xl bg-bg-main border border-border-subtle text-text-secondary hover:text-emerald-500 hover:border-emerald-500/30 transition-all shadow-sm"
-            >
-              <ExternalLink className="w-4 h-4" />
-            </a>
-          )}
-        </div>
-
-        {/* Form */}
-        <div className="space-y-5">
-          <div className="space-y-2">
+          {/* Action Area */}
+          <div className="space-y-3">
             <Input
-              label="Handle or Profile URL"
-              placeholder={`e.g. ${platform.username || 'username'}`}
+              placeholder="Username or URL"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              error={error || undefined}
-              className="bg-bg-main/50"
+              className="bg-bg-card-alt/30 border-border-subtle h-12 px-4 font-bold text-sm rounded-2xl"
             />
-            {platform.connected && platform.stats && !isHackerRank && (
-              <p className="text-[10px] font-bold text-text-secondary/60 uppercase tracking-widest px-1">
-                {platform.id === 'github' ? 'Repositories' : 'Solved'} {platform.stats.solved} — Rating {platform.stats.rank || 'N/A'}
-              </p>
-            )}
-            {platform.connected && isHackerRank && (
-              <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest px-1">
-                HackerRank Certified Professional
-              </p>
-            )}
-          </div>
-
-          <div className="flex gap-3">
-            <Button
-              className="flex-1 rounded-xl font-black uppercase tracking-widest text-[10px]"
-              onClick={handleSave}
-              loading={loading}
-              variant={platform.connected ? "secondary" : "primary"}
-            >
-              {platform.connected ? "Update Profile" : "Connect Account"}
-            </Button>
-            {platform.connected && (
+            <div className="flex gap-2">
               <Button
-                variant="outline"
-                size="icon"
-                onClick={handleSync}
-                loading={syncing}
-                className="rounded-xl w-12 h-12"
-              >
-                <RefreshCw className={cn("w-5 h-5", syncing && "animate-spin")} />
-              </Button>
-            )}
-          </div>
-        </div>
-
-        {/* Stats Preview - Hidden for HackerRank as requested */}
-        {platform.connected && platform.stats && !isHackerRank && (
-          <div className="grid grid-cols-2 gap-4 pt-6 border-t border-border-subtle">
-            <div className="p-4 bg-bg-main/40 rounded-2xl border border-border-subtle group/stat hover:border-emerald-500/20 transition-all">
-              <p className="text-[9px] font-black text-text-secondary uppercase tracking-widest mb-2">
-                {platform.id === 'github' ? 'Repositories' : 'Problems'}
-              </p>
-              <p className="text-2xl font-black text-text-primary group-hover/stat:text-emerald-500 transition-colors">{platform.stats.solved}</p>
-            </div>
-            <div className="p-4 bg-bg-main/40 rounded-2xl border border-border-subtle group/stat hover:border-blue-500/20 transition-all">
-              <p className="text-[9px] font-black text-text-secondary uppercase tracking-widest mb-2">Rating</p>
-              <p className="text-2xl font-black text-text-primary group-hover/stat:text-blue-500 transition-colors">{platform.stats.rank || 'N/A'}</p>
-            </div>
-          </div>
-        )}
-
-        {/* Badges Section */}
-        {platform.connected && platform.badges && platform.badges.length > 0 && (
-          <div className="pt-6 border-t border-border-subtle">
-            <div className="flex items-center justify-between mb-6">
-              <p className="text-[9px] font-black text-text-secondary uppercase tracking-widest flex items-center gap-2">
-                <Trophy className="w-3.5 h-3.5 text-amber-500" /> {isHackerRank ? "Skill Badges" : "Recent Achievements"}
-              </p>
-              <span className="text-[9px] font-black text-text-secondary opacity-50">{platform.badges.length} Earned</span>
-            </div>
-
-            {isHackerRank ? (
-              <div className="grid grid-cols-3 gap-y-10 gap-x-4">
-                {platform.badges.map((badge, i) => (
-                  <HackerRankBadge key={i} badge={badge} />
-                ))}
-              </div>
-            ) : (
-              <div className="flex flex-wrap gap-3">
-                {platform.badges.slice(0, 4).map((badge, i) => (
-                  <div key={i} className="w-10 h-10 rounded-xl bg-bg-main border border-border-subtle p-2 flex items-center justify-center group/badge relative hover:border-amber-500/30 transition-all">
-                    {badge.icon ? (
-                      <img src={badge.icon} alt={badge.badge_name} className="w-full h-full object-contain drop-shadow-md" />
-                    ) : (
-                      <Trophy className="w-full h-full text-text-secondary/20" />
-                    )}
-                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 px-3 py-1.5 bg-black/90 backdrop-blur-md text-[10px] text-white font-bold rounded-lg opacity-0 group-hover/badge:opacity-100 transition-all pointer-events-none whitespace-nowrap z-20 shadow-xl border border-white/10 scale-90 group-hover/badge:scale-100">
-                      {badge.badge_name}
-                    </div>
-                  </div>
-                ))}
-                {platform.badges.length > 4 && (
-                  <div className="w-10 h-10 rounded-xl bg-bg-main border border-border-subtle flex items-center justify-center text-[10px] font-black text-text-secondary hover:text-text-primary transition-colors">
-                    +{platform.badges.length - 4}
-                  </div>
+                className={cn(
+                  "flex-1 h-12 rounded-2xl font-black uppercase tracking-widest text-[10px]",
+                  platform.connected ? "bg-bg-card-alt text-text-primary border border-border-subtle" : "bg-emerald-500 text-white shadow-lg shadow-emerald-500/10"
                 )}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Footer */}
-        {platform.connected && (
-          <div className="pt-6 mt-auto flex items-center justify-between border-t border-border-subtle">
-            <div className="flex items-center gap-2 text-[9px] font-black text-text-secondary uppercase tracking-widest">
-              <Clock className="w-3.5 h-3.5" />
-              {platform.lastSynced ? (
-                <span>Last Sync: {new Date(platform.lastSynced.replace(' ', 'T') + 'Z').toLocaleDateString('en-GB')}</span>
-              ) : (
-                <span className="text-amber-500/70">Awaiting First Sync</span>
+                onClick={handleSave}
+                loading={loading}
+              >
+                {platform.connected ? "Update" : "Link"}
+              </Button>
+              {platform.connected && platform.profileUrl && (
+                <a href={platform.profileUrl} target="_blank" className="w-12 h-12 flex items-center justify-center bg-bg-card-alt border border-border-subtle rounded-2xl text-text-secondary hover:text-emerald-500 transition-all">
+                  <ExternalLink className="w-5 h-5" />
+                </a>
               )}
             </div>
-            <ChevronRight className="w-4 h-4 text-text-secondary/30" />
           </div>
-        )}
-      </CardContent>
-    </Card>
+
+          {/* Compact Stats */}
+          {platform.connected && platform.stats && (
+            <div className="grid grid-cols-2 gap-3 pt-4 border-t border-border-subtle/30">
+              <div className="p-4 bg-bg-card-alt/30 rounded-2xl border border-border-subtle/50 group/stat">
+                <p className="text-[8px] font-black text-text-secondary uppercase tracking-widest mb-1 opacity-60">Activity</p>
+                <p className="text-xl font-black text-text-primary tabular-nums tracking-tighter group-hover/stat:text-emerald-500 transition-colors">
+                  {platform.stats.solved || 0}
+                </p>
+              </div>
+              <div className="p-4 bg-bg-card-alt/30 rounded-2xl border border-border-subtle/50 group/stat">
+                <p className="text-[8px] font-black text-text-secondary uppercase tracking-widest mb-1 opacity-60">Status</p>
+                <p className="text-xl font-black text-text-primary tabular-nums tracking-tighter group-hover/stat:text-blue-500 transition-colors">
+                  {platform.stats.rank || 'Prime'}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Compact Achievements */}
+          {platform.connected && platform.badges && platform.badges.length > 0 && (
+            <div className="pt-4 border-t border-border-subtle/30">
+               <div className="flex items-center justify-between mb-3">
+                  <p className="text-[8px] font-black text-text-secondary uppercase tracking-widest flex items-center gap-1.5">
+                    <Trophy className="w-3 h-3 text-amber-500" /> Trophies
+                  </p>
+                  <span className="text-[8px] font-black text-amber-500 bg-amber-500/5 px-2 py-0.5 rounded-full border border-amber-500/10">{platform.badges.length}</span>
+               </div>
+               <div className="flex flex-wrap gap-2">
+                  {platform.badges.slice(0, 4).map((badge, i) => (
+                    <div key={i} className="w-10 h-10 rounded-xl bg-bg-card-alt border border-border-subtle p-2.5 flex items-center justify-center group/badge relative hover:border-amber-500/30 transition-all">
+                       {badge.icon ? <img src={badge.icon} className="w-full h-full object-contain" alt="" /> : <Trophy className="w-full h-full text-text-secondary/20" />}
+                    </div>
+                  ))}
+                  {platform.badges.length > 4 && (
+                    <div className="w-10 h-10 rounded-xl bg-bg-card-alt border border-border-subtle flex items-center justify-center text-[8px] font-black text-text-secondary">+{platform.badges.length - 4}</div>
+                  )}
+               </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 };
 export default PlatformCard;

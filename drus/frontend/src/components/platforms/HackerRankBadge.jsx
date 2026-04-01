@@ -9,20 +9,29 @@ export const HackerRankBadge = ({ badge = {} }) => {
     // HackerRank naming convention often includes the topic
     const shortName = displayName.replace(/Badge$/i, '').trim() || "Badge";
 
+    // Fix for broken HackerRank badge URLs often seen in old data
+    let resolvedIcon = icon;
+    if (icon && (icon.includes('hackerrank.com/badge/') || !icon.match(/\.(png|svg|jpg|jpeg|gif)$/i))) {
+        const parts = icon.split('/');
+        const type = parts[parts.length - 1];
+        if (type) {
+            resolvedIcon = `https://hrcdn.net/fcore/assets/badges/${type}.svg`;
+        }
+    }
+
     // Most HackerRank badges are peach/orange colored when earned
-    // we'll use a premium gradient for this
     const isEarned = (stars || 0) > 0;
 
     return (
-        <div className="flex flex-col items-center group/hr-badge">
+        <div className="flex flex-col items-center group/hr-badge cursor-default transform transition-transform hover:scale-105">
             <div className="relative w-24 h-28 flex items-center justify-center mb-4">
                 {/* Hexagonal Background using clip-path */}
                 <div
                     className={cn(
                         "absolute inset-0 transition-transform duration-500 group-hover/hr-badge:scale-110 group-hover/hr-badge:rotate-3 shadow-2xl",
                         isEarned
-                            ? "bg-gradient-to-br from-[#f8d7da] via-[#f5b7b1] to-[#edbb99]"
-                            : "bg-slate-200"
+                            ? "bg-gradient-to-br from-[#f8d7da] via-[#f5b7b1] to-[#edbb99] ring-2 ring-accent-emerald/30 group-hover/hr-badge:ring-accent-emerald/50"
+                            : "bg-emerald-500/10 opacity-60"
                     )}
                     style={{
                         clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)'
@@ -40,14 +49,14 @@ export const HackerRankBadge = ({ badge = {} }) => {
 
                 {/* Badge Icon */}
                 <div className="relative z-10 w-12 h-12 flex items-center justify-center">
-                    {icon ? (
+                    {resolvedIcon ? (
                         <img
-                            src={icon}
-                            alt={name}
+                            src={resolvedIcon}
+                            alt={displayName}
                             className="w-full h-full object-contain drop-shadow-[0_4px_4px_rgba(0,0,0,0.2)] grayscale-[0.2] group-hover/hr-badge:grayscale-0 transition-all"
                         />
                     ) : (
-                        <span className="text-2xl font-black text-slate-800/20">{name[0]}</span>
+                        <span className="text-2xl font-black text-emerald-900/20">{displayName[0]}</span>
                     )}
                 </div>
 
@@ -70,7 +79,7 @@ export const HackerRankBadge = ({ badge = {} }) => {
                                 "w-2.5 h-2.5 transition-all transform",
                                 i < stars
                                     ? "fill-amber-500 text-amber-500 scale-110 drop-shadow-[0_0_2px_rgba(245,158,11,0.5)]"
-                                    : "text-slate-300 scale-90"
+                                    : "text-emerald-300/30 scale-90"
                             )}
                         />
                     ))}

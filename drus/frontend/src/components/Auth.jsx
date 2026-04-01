@@ -14,27 +14,52 @@ export const Auth = ({ onLogin }) => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    // 1. Popup fallback logic (if window.open was used)
     const handleMessage = (event) => {
-      const origin = event.origin;
-      if (!origin.endsWith('.run.app') && !origin.includes('localhost')) {
-        return;
-      }
+      const allowed =
+        event.origin === window.location.origin ||
+        event.origin.endsWith('.run.app') ||
+        event.origin.includes('localhost');
+      if (!allowed) return;
       if (event.data?.type === 'OAUTH_AUTH_SUCCESS') {
         onLogin(event.data.user, event.data.token);
       }
     };
     window.addEventListener('message', handleMessage);
+
+    // 2. Main Tab Redirect logic (checking params on mount)
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token');
+    const userStr = params.get('user');
+
+    if (token && userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        // Clean URL to remove tokens securely without reloading
+        window.history.replaceState({}, document.title, window.location.pathname);
+        onLogin(user, token);
+      } catch (err) {
+        console.error("Failed to parse user data from OAuth redirect", err);
+      }
+    }
+
     return () => window.removeEventListener('message', handleMessage);
   }, [onLogin]);
 
   const handleGoogleLogin = async () => {
     try {
-      const response = await fetch('/api/auth/google/url');
+      const origin = window.location.origin;
+      // Pass the current origin so the backend knows where to redirect back to
+      const response = await fetch(`/api/auth/google/url?origin=${encodeURIComponent(origin)}`);
       if (!response.ok) throw new Error("Failed to get auth URL");
+
       const { url } = await response.json();
-      window.open(url, 'google_oauth', 'width=600,height=700');
-    } catch {
-      setError("Failed to initiate Google login");
+
+      // Use full-page redirect to completely avoid mobile / async popup blockers
+      window.location.href = url;
+    } catch (err) {
+      console.error("Google Login Initialization Error:", err);
+      setError("Failed to initiate Google login: " + err.message);
     }
   };
 
@@ -76,7 +101,7 @@ export const Auth = ({ onLogin }) => {
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-emerald-500/5 rounded-full blur-[120px]" />
       </div>
 
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
@@ -85,7 +110,7 @@ export const Auth = ({ onLogin }) => {
         <Card className="border-none shadow-2xl shadow-black/40 overflow-hidden">
           <CardContent className="p-10">
             <div className="flex flex-col items-center mb-10">
-              <motion.div 
+              <motion.div
                 whileHover={{ rotate: 10, scale: 1.1 }}
                 className="w-16 h-16 bg-gradient-to-br from-blue-600 to-emerald-500 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20 mb-6"
               >
@@ -128,9 +153,9 @@ export const Auth = ({ onLogin }) => {
                 icon={<Lock className="w-4 h-4" />}
                 required
               />
-              
+
               {error && (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   className="bg-red-500/10 border border-red-500/20 text-red-500 text-[10px] font-black uppercase tracking-widest p-3 rounded-xl flex items-center gap-2"
@@ -140,7 +165,7 @@ export const Auth = ({ onLogin }) => {
                 </motion.div>
               )}
 
-              <Button 
+              <Button
                 type="submit"
                 loading={loading}
                 className="w-full h-14 rounded-2xl font-black uppercase tracking-widest text-xs shadow-lg shadow-blue-500/20"
@@ -159,7 +184,7 @@ export const Auth = ({ onLogin }) => {
               </div>
             </div>
 
-            <Button 
+            <Button
               variant="outline"
               onClick={handleGoogleLogin}
               className="w-full h-14 rounded-2xl font-black uppercase tracking-widest text-xs border-2 hover:bg-bg-main/50"
@@ -188,7 +213,7 @@ export const Auth = ({ onLogin }) => {
             <div className="text-center mt-10">
               <p className="text-text-secondary text-xs font-bold">
                 {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
-                <button 
+                <button
                   onClick={() => setIsLogin(!isLogin)}
                   className="text-blue-500 font-black uppercase tracking-widest hover:text-blue-400 transition-colors ml-1"
                 >
@@ -198,7 +223,7 @@ export const Auth = ({ onLogin }) => {
             </div>
           </CardContent>
         </Card>
-        
+
         <div className="mt-8 flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-text-secondary opacity-40">
           <ShieldCheck className="w-3 h-3" />
           Secure Enterprise Authentication

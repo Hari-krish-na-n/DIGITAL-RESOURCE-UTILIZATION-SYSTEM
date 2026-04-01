@@ -9,6 +9,7 @@ import {
   fetchGitHub,
   fetchCodeChef,
   fetchAtCoder,
+  fetchUnstop,
   extractUsername
 } from "../services/platformFetchers.js";
 
@@ -21,7 +22,8 @@ const SUPPORTED_PLATFORMS = [
   { id: "atcoder", name: "AtCoder", icon: "Zap" },
   { id: "geeksforgeeks", name: "GeeksforGeeks", icon: "BookOpen" },
   { id: "hackerrank", name: "HackerRank", icon: "Award" },
-  { id: "github", name: "GitHub", icon: "Github" }
+  { id: "github", name: "GitHub", icon: "Github" },
+  { id: "unstop", name: "Unstop", icon: "Target" }
 ];
 
 router.get("/me/platforms", authenticateToken, (req, res) => {
@@ -39,7 +41,7 @@ router.get("/me/platforms", authenticateToken, (req, res) => {
       )
     `).all(req.user.id, req.user.id);
 
-    const badges = db.prepare("SELECT * FROM badges WHERE user_id = ?").all(req.user.id);
+    const badges = db.prepare("SELECT * FROM badges WHERE user_id = ? ORDER BY awarded_at DESC").all(req.user.id);
 
     const result = SUPPORTED_PLATFORMS.map(p => {
       const conn = connections.find((c) => c.platform.toLowerCase() === p.id);
@@ -151,14 +153,26 @@ router.post("/:platformId/sync", authenticateToken, async (req, res) => {
       case "github": stats = await fetchGitHub(connection.platform_username); break;
       case "codechef": stats = await fetchCodeChef(connection.platform_username); break;
       case "atcoder": stats = await fetchAtCoder(connection.platform_username); break;
+      case "unstop": stats = await fetchUnstop(connection.platform_username); break;
       default: throw new Error(`Unsupported platform: ${connection.platform}`);
     }
 
     const transaction = db.transaction(() => {
       db.prepare(`
-        INSERT INTO activity_logs (user_id, platform, problems_solved, rank, contests, accuracy, speed, sync_date)
-        VALUES (?, ?, ?, ?, ?, ?, ?, DATE('now'))
-      `).run(req.user.id, connection.platform, stats.solved, stats.rank, stats.contests, stats.accuracy, stats.speed);
+        INSERT INTO activity_logs (user_id, platform, problems_solved, easy_solved, medium_solved, hard_solved, rank, contests, accuracy, speed, sync_date)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, DATE('now'))
+      `).run(
+        req.user.id,
+        connection.platform,
+        stats.solved || 0,
+        stats.easy || 0,
+        stats.medium || 0,
+        stats.hard || 0,
+        stats.rank || 0,
+        stats.contests || 0,
+        stats.accuracy || 0,
+        stats.speed || 0
+      );
 
       if (platformKey === "github" && stats.repos) {
         db.prepare("DELETE FROM github_repos WHERE user_id = ?").run(req.user.id);

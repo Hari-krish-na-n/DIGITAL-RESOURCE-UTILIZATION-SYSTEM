@@ -1,17 +1,10 @@
 import Database from "better-sqlite3";
-import mongoose from "mongoose";
 import dotenv from "dotenv";
 
 dotenv.config();
 
 const db = new Database("drus.db");
 db.pragma('foreign_keys = OFF'); // Disabled to allow MongoDB _id strings as user_id
-
-// MongoDB Initialization
-const MONGODB_URI = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/drus";
-mongoose.connect(MONGODB_URI)
-  .then(() => console.log("Connected to MongoDB for User data"))
-  .catch((err) => console.error("MongoDB connection error:", err));
 
 // Initialize Database
 db.exec(`
@@ -20,6 +13,7 @@ db.exec(`
     username TEXT UNIQUE,
     email TEXT UNIQUE,
     password TEXT,
+    avatar_url TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
 
@@ -37,6 +31,9 @@ db.exec(`
     user_id INTEGER,
     platform TEXT,
     problems_solved INTEGER,
+    easy_solved INTEGER DEFAULT 0,
+    medium_solved INTEGER DEFAULT 0,
+    hard_solved INTEGER DEFAULT 0,
     rank INTEGER,
     contests INTEGER,
     accuracy REAL, -- Percentage
@@ -96,6 +93,21 @@ db.exec(`
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(user_id) REFERENCES users(id)
   );
+
+  CREATE TABLE IF NOT EXISTS competitions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,
+    platform TEXT NOT NULL,
+    name TEXT NOT NULL,
+    team_name TEXT,
+    registered_on DATE,
+    deadline DATE,
+    status TEXT DEFAULT 'Registered',
+    logo_url TEXT,
+    competition_url TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(user_id) REFERENCES users(id)
+  );
 `);
 
 // Migration: Copy data from udemy_courses to learning_courses if it exists
@@ -114,10 +126,13 @@ try {
 
 // Drop old table if migration was successful
 try {
-  const count = db.prepare("SELECT COUNT(*) as count FROM learning_courses WHERE provider = 'Udemy'").get().count;
-  const oldCount = db.prepare("SELECT COUNT(*) as count FROM udemy_courses").get().count;
-  if (count === oldCount && count > 0) {
-    db.exec("DROP TABLE udemy_courses;");
+  const oldExists = db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='udemy_courses'").get();
+  if (oldExists) {
+    const count = db.prepare("SELECT COUNT(*) as count FROM learning_courses WHERE provider = 'Udemy'").get().count;
+    const oldCount = db.prepare("SELECT COUNT(*) as count FROM udemy_courses").get().count;
+    if (count === oldCount && count > 0) {
+      db.exec("DROP TABLE udemy_courses;");
+    }
   }
 } catch (err) {
   // Tables might not exist yet or migration already done
@@ -136,5 +151,15 @@ try {
 } catch {
   // Column might already exist
 }
+
+try {
+  db.exec("ALTER TABLE activity_logs ADD COLUMN easy_solved INTEGER DEFAULT 0;");
+} catch { }
+try {
+  db.exec("ALTER TABLE activity_logs ADD COLUMN medium_solved INTEGER DEFAULT 0;");
+} catch { }
+try {
+  db.exec("ALTER TABLE activity_logs ADD COLUMN hard_solved INTEGER DEFAULT 0;");
+} catch { }
 
 export default db;

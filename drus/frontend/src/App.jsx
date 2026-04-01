@@ -7,12 +7,16 @@ import { PlatformProvider } from "./context/PlatformContext";
 import { NotificationProvider } from "./context/NotificationContext";
 import { DashboardProvider } from "./context/DashboardContext";
 import { AnalyticsProvider } from "./context/AnalyticsContext";
+import { AIProvider } from "./context/AIContext";
 
 import { Dashboard } from "./components/Dashboard";
 import { AnalyticsPage } from "./components/AnalyticsPage";
 import { PlatformGrid } from "./components/platforms/PlatformGrid";
 import { Repositories } from "./components/Repositories";
 import { Courses } from "./components/Courses";
+import { Reports } from "./components/Reports";
+import { Profile } from "./components/Profile";
+import { AIProfile } from "./components/AIProfile";
 
 function AppContent() {
   const { user, loading, login, logout } = useUser();
@@ -27,7 +31,9 @@ function AppContent() {
           <PlatformProvider>
             <DashboardProvider>
               <AnalyticsProvider>
-                <Layout user={user} onLogout={logout} />
+                <AIProvider>
+                  <Layout user={user} onLogout={logout} />
+                </AIProvider>
               </AnalyticsProvider>
             </DashboardProvider>
           </PlatformProvider>
@@ -37,6 +43,9 @@ function AppContent() {
         <Route path="repositories" element={<Repositories />} />
         <Route path="courses" element={<Courses />} />
         <Route path="platforms" element={<PlatformGrid />} />
+        <Route path="reports" element={<Reports />} />
+        <Route path="profile" element={<Profile />} />
+        <Route path="ai-profile" element={<AIProfile />} />
       </Route>
       <Route
         path="/login"

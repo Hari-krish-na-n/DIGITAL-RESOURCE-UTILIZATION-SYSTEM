@@ -1,0 +1,13 @@
+{
+  "name": "drus-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "frontend:build": "npm run build --prefix drus/frontend",
+    "frontend:dev": "npm run dev --prefix drus/frontend",
+    "backend:start": "npm run start --prefix drus/backend",
+    "backend:dev": "npm run dev --prefix drus/backend",
+    "build": "npm run build --prefix drus/frontend",
+    "install:all": "npm install --prefix drus/frontend && npm install --prefix drus/backend"
+  }
+}

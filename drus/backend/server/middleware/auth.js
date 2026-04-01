@@ -17,19 +17,20 @@ export const authenticateToken = (req, res, next) => {
       console.error("[Auth] Token verification failed:", err.message);
       return res.status(403).json({ error: "Invalid or expired token", details: err.message });
     }
-    
-    try {
-      const userExists = db.prepare("SELECT id FROM users WHERE id = ?").get(decoded.id);
-      if (!userExists) {
-        console.warn("[Auth] User not found in database:", decoded.id);
-        return res.status(403).json({ error: "User no longer exists" });
-      }
-      
-      req.user = decoded;
-      next();
-    } catch (dbErr) {
-      console.error("[Auth] Database error during verification:", dbErr.message);
-      return res.status(500).json({ error: "Internal server error during authentication" });
+
+    // Verify user still exists in SQLite (fast, synchronous, no external dependency)
+    const user = db.prepare("SELECT id, username, email, avatar_url FROM users WHERE id = ?").get(decoded.id);
+    if (!user) {
+      console.warn("[Auth] User not found in SQLite:", decoded.id);
+      return res.status(403).json({ error: "User no longer exists" });
     }
+
+    req.user = { 
+      id: user.id, 
+      username: user.username, 
+      email: user.email,
+      avatar_url: user.avatar_url 
+    };
+    next();
   });
 };

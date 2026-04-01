@@ -6,12 +6,12 @@ export function cn(...inputs) {
 }
 
 export const COLORS = [
-  '#4F46E5', // Indigo
+  '#38BDF8', // Sky / Primary
   '#10B981', // Emerald
-  '#3B82F6', // Blue
-  '#F59E0B', // Amber
   '#8B5CF6', // Purple
+  '#F59E0B', // Amber
   '#F43F5E', // Rose
-  '#06B6D4', // Cyan
-  '#84CC16', // Lime
+  '#6366F1', // Indigo
+  '#2DD4BF', // Teal
+  '#EC4899', // Pink
 ];

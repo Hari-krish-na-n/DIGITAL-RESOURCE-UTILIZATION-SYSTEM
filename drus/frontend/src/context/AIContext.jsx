@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
+import { API_BASE_URL } from '../api.config';
 
 const AIContext = createContext();
 
@@ -16,7 +17,7 @@ export const AIProvider = ({ children }) => {
   const fetchAIScore = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/ai/score', {
+      const response = await fetch(`${API_BASE_URL}/api/ai/score`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -34,7 +35,7 @@ export const AIProvider = ({ children }) => {
   const fetchAIReport = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/ai/report', {
+      const response = await fetch(`${API_BASE_URL}/api/ai/report`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -52,7 +53,7 @@ export const AIProvider = ({ children }) => {
   const fetchCareerRecommendations = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/ai/recommendations', {
+      const response = await fetch(`${API_BASE_URL}/api/ai/recommendations`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -70,7 +71,7 @@ export const AIProvider = ({ children }) => {
   const fetchAIInsights = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/ai/insights', {
+      const response = await fetch(`${API_BASE_URL}/api/ai/insights`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -88,7 +89,7 @@ export const AIProvider = ({ children }) => {
   const fetchLearningPath = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/ai/learning-path', {
+      const response = await fetch(`${API_BASE_URL}/api/ai/learning-path`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -105,7 +106,7 @@ export const AIProvider = ({ children }) => {
   const fetchSkillGaps = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/ai/skill-gap', {
+      const response = await fetch(`${API_BASE_URL}/api/ai/skill-gap`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -122,7 +123,7 @@ export const AIProvider = ({ children }) => {
   const fetchMotivation = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/ai/motivation', {
+      const response = await fetch(`${API_BASE_URL}/api/ai/motivation`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -138,7 +139,7 @@ export const AIProvider = ({ children }) => {
 
   const exportPDF = useCallback(async () => {
     try {
-      const response = await fetch('/api/ai/export-pdf', {
+      const response = await fetch(`${API_BASE_URL}/api/ai/export-pdf`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -161,7 +162,7 @@ export const AIProvider = ({ children }) => {
 
   const sendChatMessage = useCallback(async (message) => {
     try {
-      const response = await fetch('/api/ai/chat', {
+      const response = await fetch(`${API_BASE_URL}/api/ai/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

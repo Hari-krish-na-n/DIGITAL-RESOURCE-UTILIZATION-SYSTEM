@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { API_BASE_URL } from "../api.config";
 import {
     FileText,
     Download,
@@ -31,7 +32,7 @@ export const ReportModal = ({ isOpen, onClose, platforms }) => {
     const handleGenerate = async () => {
         setLoading(true);
         try {
-            const response = await fetch('/api/reports/generate', {
+            const response = await fetch(`${API_BASE_URL}/api/reports/generate`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

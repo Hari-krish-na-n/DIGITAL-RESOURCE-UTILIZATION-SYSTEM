@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { API_BASE_URL } from "../api.config";
 import { motion } from "motion/react";
 import { Activity, ShieldCheck, Mail, Lock, User as UserIcon, ArrowRight, AlertCircle } from "lucide-react";
 import { Card, CardContent } from "./ui/Card";
@@ -41,7 +42,7 @@ export const Auth = ({ onLogin }) => {
     const body = isLogin ? { email, password } : { username, email, password };
 
     try {
-      const res = await fetch(endpoint, {
+      const res = await fetch(`${API_BASE_URL}${endpoint}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),

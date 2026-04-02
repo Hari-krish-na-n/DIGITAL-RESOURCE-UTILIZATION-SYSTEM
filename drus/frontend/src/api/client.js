@@ -1,5 +1,7 @@
+import { API_BASE_URL } from '../api.config';
+
 export default async function client(endpoint, options = {}) {
-    const url = endpoint.startsWith('http') ? endpoint : `/api${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
+    const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}/api${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
 
     const token = localStorage.getItem('token');
 

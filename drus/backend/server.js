@@ -1,4 +1,5 @@
 import express from "express";
+import cors from "cors";
 import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -19,7 +20,32 @@ const __dirname = path.dirname(__filename);
 
 async function startServer() {
   const app = express();
-  const PORT = process.env.PORT || 5006;
+  const PORT = process.env.PORT || 10000;
+
+  // ─── CORS ──────────────────────────────────────────────────────────────────
+  const allowedOrigins = [
+    process.env.FRONTEND_URL || "https://digital-resource-utilization-system.vercel.app",
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "http://localhost:3001",
+  ];
+
+  app.use(
+    cors({
+      origin: (origin, callback) => {
+        // Allow requests with no origin (mobile apps, curl, Postman, etc.)
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.includes(origin)) return callback(null, true);
+        callback(new Error(`CORS: origin ${origin} not allowed`));
+      },
+      credentials: true,
+      methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+      allowedHeaders: ["Content-Type", "Authorization"],
+    })
+  );
+
+  // Handle pre-flight OPTIONS requests for all routes
+  app.options("*", cors());
 
   app.use((req, res, next) => {
     console.log(`[SERVER] ${req.method} ${req.url} - Host: ${req.headers.host}`);
